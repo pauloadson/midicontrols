@@ -1,0 +1,16 @@
+# Dependências
+node_modules/
+
+# Artefatos de Build do Electron
+dist/
+build/
+
+# Cache do Sistema e Ferramentas
+.eslintcache
+.stylelintcache
+*.log
+.DS_Store
+
+# Cache do electron-builder (Windows)
+AppData/
+Local/

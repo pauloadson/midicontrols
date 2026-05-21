@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Faders MIDI Virtuais</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Faders MIDI Virtuais</h1>
+  <div class="field">
+    <label for="port">Saída</label>
+    <select id="port"><option>—</option></select>
+  </div>
+  <div class="field">
+    <label for="channel">Canal</label>
+    <select id="channel"></select>
+  </div>
+  <button id="sendAll" title="Reenvia o valor atual de todos os controles">Enviar tudo</button>
+  <div id="status"><span id="dot"></span><span id="statusText">iniciando…</span></div>
+</header>
+
+<h2 class="section-title">Knobs</h2>
+<div id="knobRack"></div>
+
+<h2 class="section-title">Faders</h2>
+<div id="rack"></div>
+
+<footer>
+  Abra com o <code>loopMIDI</code> aberto e uma porta criada. Selecione essa porta em "Saída".
+  Edite o nome e o CC de cada controle; as alterações são salvas automaticamente.
+  Faders: arraste verticalmente. Knobs: arraste o mouse para cima/baixo.
+  Duplo clique volta para 0. Requer Chrome, Edge ou Electron.
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
