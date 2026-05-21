@@ -410,16 +410,12 @@ function buildRack() {
         <input class="fader" type="range" min="0" max="127" step="1" value="${strip.value}">
       </div>
       <div class="value">${strip.value}</div>
-      <div class="cc-row">SW <input class="toggle-cc" type="number" min="0" max="127" value="${strip.toggleCC}"></div>
-      <button class="toggle${strip.toggleOn ? " on" : ""}">${strip.toggleOn ? "ON" : "OFF"}</button>
     `;
 
     const $lbl = el.querySelector(".lbl");
     const $cc = el.querySelector(".cc");
     const $fader = el.querySelector(".fader");
     const $val = el.querySelector(".value");
-    const $toggleCC = el.querySelector(".toggle-cc");
-    const $toggle = el.querySelector(".toggle");
 
     $lbl.addEventListener("change", () => {
       strip.label = $lbl.value.trim() || "Fader " + (i + 1);
@@ -430,21 +426,6 @@ function buildRack() {
     $cc.addEventListener("change", () => {
       strip.cc = clampCC($cc.value);
       $cc.value = strip.cc;
-      saveConfig();
-    });
-
-    $toggleCC.addEventListener("change", () => {
-      strip.toggleCC = clampCC($toggleCC.value);
-      $toggleCC.value = strip.toggleCC;
-      saveConfig();
-    });
-
-    // Botão liga/desliga: envia 127 (ON) ou 0 (OFF) no CC do switch.
-    $toggle.addEventListener("click", () => {
-      strip.toggleOn = !strip.toggleOn;
-      $toggle.classList.toggle("on", strip.toggleOn);
-      $toggle.textContent = strip.toggleOn ? "ON" : "OFF";
-      sendCC(strip.toggleCC, strip.toggleOn ? 127 : 0);
       saveConfig();
     });
 
@@ -521,8 +502,6 @@ function buildKnobs() {
         </svg>
       </div>
       <div class="value">${knob.value}</div>
-      <div class="cc-row">SW <input class="toggle-cc" type="number" min="0" max="127" value="${knob.toggleCC}"></div>
-      <button class="toggle${knob.toggleOn ? " on" : ""}">${knob.toggleOn ? "ON" : "OFF"}</button>
     `;
 
     const $lbl = el.querySelector(".lbl");
@@ -531,8 +510,6 @@ function buildKnobs() {
     const $arc = el.querySelector(".knob-arc");
     const $ind = el.querySelector(".knob-ind");
     const $val = el.querySelector(".value");
-    const $toggleCC = el.querySelector(".toggle-cc");
-    const $toggle = el.querySelector(".toggle");
 
     function render() {
       const angle = -135 + (knob.value / 127) * 270;
@@ -551,21 +528,6 @@ function buildKnobs() {
     $cc.addEventListener("change", () => {
       knob.cc = clampCC($cc.value);
       $cc.value = knob.cc;
-      saveConfig();
-    });
-
-    $toggleCC.addEventListener("change", () => {
-      knob.toggleCC = clampCC($toggleCC.value);
-      $toggleCC.value = knob.toggleCC;
-      saveConfig();
-    });
-
-    // Botão liga/desliga: envia 127 (ON) ou 0 (OFF) no CC do switch.
-    $toggle.addEventListener("click", () => {
-      knob.toggleOn = !knob.toggleOn;
-      $toggle.classList.toggle("on", knob.toggleOn);
-      $toggle.textContent = knob.toggleOn ? "ON" : "OFF";
-      sendCC(knob.toggleCC, knob.toggleOn ? 127 : 0);
       saveConfig();
     });
 
@@ -626,11 +588,9 @@ function buildKnobs() {
 document.getElementById("sendAll").addEventListener("click", () => {
   state.strips.forEach((s) => {
     sendCC(s.cc, s.value);
-    sendCC(s.toggleCC, s.toggleOn ? 127 : 0);
   });
   state.knobs.forEach((k) => {
     sendCC(k.cc, k.value);
-    sendCC(k.toggleCC, k.toggleOn ? 127 : 0);
   });
 });
 
