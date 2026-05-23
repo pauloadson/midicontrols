@@ -74,7 +74,7 @@ button:hover { border-color: var(--accent-dim); }
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
-  padding: 12px 18px 22px; /* Reduzi o padding superior */
+  padding: 12px 18px 22px;
   overflow-x: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--line) var(--bg);
@@ -151,7 +151,7 @@ button:hover { border-color: var(--accent-dim); }
   flex-direction: column;
   gap: 6px;
   justify-content: flex-start;
-  height: 270px; /* Aumentado de 230px para 270px */
+  height: 270px;
 }
 .side-knob {
   display: flex;
@@ -161,7 +161,7 @@ button:hover { border-color: var(--accent-dim); }
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 4px;
-  width: 64px; /* Aumentado de 58px */
+  width: 64px;
 }
 .side-knob-header {
   display: flex;
@@ -171,9 +171,19 @@ button:hover { border-color: var(--accent-dim); }
   gap: 2px;
   margin-bottom: 2px;
 }
+.side-knob-body {
+  position: relative;
+  border-radius: 4px;
+  padding: 4px 0;
+  width: 100%; /* Garante que pegue toda a largura do mini knob */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background 0.2s;
+}
 .side-knob .lbl {
   width: 100%;
-  font-size: 10px !important; /* Ligeiramente maior para leitura */
+  font-size: 10px !important;
   border-bottom: none !important;
   padding: 0 !important;
 }
@@ -181,7 +191,7 @@ button:hover { border-color: var(--accent-dim); }
   font-size: 8px !important;
 }
 .side-knob .cc {
-  width: 28px !important; /* Aumentado de 24px */
+  width: 28px !important;
   font-size: 8px !important;
   padding: 1px 0 !important;
 }
@@ -205,7 +215,7 @@ button:hover { border-color: var(--accent-dim); }
   font: inherit;
   font-size: 12px;
   text-align: center;
-  padding: 3px 2px; /* Adicionado um pouco de padding lateral */
+  padding: 3px 2px;
 }
 .strip input.lbl:focus { outline: none; border-bottom-color: var(--accent); }
 .cc-row {
@@ -227,16 +237,19 @@ button:hover { border-color: var(--accent-dim); }
   padding: 3px 0;
 }
 .fader-wrap {
-  height: 270px; /* Aumentado de 230px para 270px */
+  height: 270px;
+  width: 70px; /* Aumentado para cobrir quase todo o bloco do fader */
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s;
 }
 input[type=range] {
   writing-mode: vertical-lr;
   direction: rtl;
   width: 26px;
-  height: 260px; /* Aumentado de 220px para 260px */
+  height: 260px;
   accent-color: var(--accent);
   cursor: ns-resize;
 }
@@ -248,7 +261,7 @@ input[type=range] {
 }
 .section-title {
   margin: 0;
-  padding: 22px 18px 4px; /* Aumentei o padding superior e reduzi o inferior */
+  padding: 22px 18px 4px;
   font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -259,7 +272,7 @@ input[type=range] {
   display: flex;
   flex-wrap: nowrap;
   gap: 12px;
-  padding: 4px 18px 22px; /* Reduzi o padding superior */
+  padding: 4px 18px 22px;
   overflow-x: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--line) var(--bg);
@@ -275,19 +288,27 @@ input[type=range] {
   border-radius: 4px;
 }
 .strip.knob {
-  width: 80px; /* Reduzido de 92px */
-  gap: 10px; /* Restaurado de 6px ou 8px */
-  padding: 12px 8px; /* Restaurado */
+  width: 80px;
+  gap: 10px;
+  padding: 12px 8px;
 }
 .knob-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 4px 0;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.knob-wrap, .side-knob-body, .fader-wrap {
+  background: rgba(74, 222, 128, 0.03); /* Sempre visível, bem sutil */
+}
+.knob-wrap:hover, .side-knob-body:hover, .fader-wrap:hover {
+  background: rgba(74, 222, 128, 0.08); /* Ganha destaque ao passar o mouse */
 }
 .knob-svg {
-  width: 48px; /* Reduzido de 64px */
-  height: 48px; /* Reduzido de 64px */
+  width: 48px;
+  height: 48px;
   cursor: ns-resize;
   touch-action: none;
 }
@@ -320,4 +341,3 @@ footer code {
   border-radius: 3px;
   color: var(--text);
 }
-
