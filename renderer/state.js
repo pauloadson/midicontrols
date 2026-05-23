@@ -6,7 +6,13 @@ export const STORAGE_KEY = "faders-midi-config-v2"; // Incrementada para a versÃ
 export const defaultStrips = Array.from({ length: NUM_STRIPS }, (_, i) => ({
   label: "Fader " + (i + 1),
   cc: 20 + i,
-  value: 0
+  value: 0,
+  showKnobs: true,
+  knobs: Array.from({ length: 3 }, (_, k) => ({
+    label: `K${k + 1}`,
+    cc: 36 + (i * 3) + k,
+    value: 0
+  }))
 }));
 
 export const defaultKnobs = Array.from({ length: NUM_KNOBS }, (_, i) => ({
@@ -46,7 +52,16 @@ export function loadState() {
       state.channel = data.channel || 1;
       state.portId = data.portId || null;
       if (Array.isArray(data.strips) && data.strips.length === NUM_STRIPS) {
-        state.strips = data.strips;
+        state.strips = data.strips.map((s, i) => {
+          // Garante que strips antigos ganhem os novos knobs
+          if (!s.knobs || !Array.isArray(s.knobs)) {
+            s.knobs = structuredClone(defaultStrips[i].knobs);
+          }
+          if (s.showKnobs === undefined) {
+            s.showKnobs = true;
+          }
+          return s;
+        });
       }
       if (Array.isArray(data.knobs) && data.knobs.length === NUM_KNOBS) {
         state.knobs = data.knobs;

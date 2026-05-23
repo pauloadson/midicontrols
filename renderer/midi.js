@@ -45,7 +45,12 @@ export class MidiManager {
   }
 
   sendAll() {
-    this.state.strips.forEach((s) => this.sendCC(s.cc, s.value));
+    this.state.strips.forEach((s) => {
+      this.sendCC(s.cc, s.value);
+      if (s.knobs) {
+        s.knobs.forEach((k) => this.sendCC(k.cc, k.value));
+      }
+    });
     this.state.knobs.forEach((k) => this.sendCC(k.cc, k.value));
   }
 }

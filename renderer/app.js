@@ -74,24 +74,165 @@ function buildChannelSelect() {
   });
 }
 
+function buildKnobs() {
+  $knobRack.innerHTML = "";
+  state.knobs.forEach((knob, i) => {
+    const el = document.createElement("div");
+    el.className = "strip knob";
+    el.innerHTML = `
+      <input class="lbl" type="text" value="${escapeAttr(knob.label)}" maxlength="14">
+      <div class="cc-row">CC <input class="cc" type="number" min="0" max="127" value="${knob.cc}"></div>
+      <div class="knob-wrap">
+        <svg class="knob-svg" viewBox="0 0 64 64">
+          <path class="knob-bg" d="${knobArcPath(32, 32, 24, 127)}"></path>
+          <path class="knob-arc"></path>
+          <circle class="knob-body" cx="32" cy="32" r="16"></circle>
+          <g class="knob-ind">
+            <line class="knob-line" x1="32" y1="14" x2="32" y2="22"></line>
+          </g>
+        </svg>
+      </div>
+      <div class="value">${knob.value}</div>
+    `;
+    setupKnob(el, knob, () => "Knob " + (i + 1));
+    $knobRack.appendChild(el);
+  });
+}
+
+function setupKnob(el, knobData, defaultLabelFn) {
+  const $lbl = el.querySelector(".lbl");
+  const $cc = el.querySelector(".cc");
+  const $svg = el.querySelector(".knob-svg");
+  const $arc = el.querySelector(".knob-arc");
+  const $ind = el.querySelector(".knob-ind");
+  const $val = el.querySelector(".value");
+  // O wrap ou o corpo do knob onde o scroll deve agir
+  const $scrollArea = el.querySelector(".knob-wrap") || el.querySelector(".side-knob-body");
+
+  function render() {
+    const angle = -135 + (knobData.value / 127) * 270;
+    if ($ind) $ind.setAttribute("transform", `rotate(${angle} 32 32)`);
+    if ($arc) $arc.setAttribute("d", knobArcPath(32, 32, 24, knobData.value));
+    $val.textContent = knobData.value;
+  }
+  render();
+
+  $lbl.addEventListener("change", () => {
+    knobData.label = $lbl.value.trim() || defaultLabelFn();
+    $lbl.value = knobData.label;
+    saveConfig(state);
+  });
+
+  $cc.addEventListener("change", () => {
+    knobData.cc = clampCC($cc.value);
+    $cc.value = knobData.cc;
+    saveConfig(state);
+  });
+
+  let dragging = false;
+  let startY = 0;
+  let startValue = 0;
+
+  $svg.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    startY = e.clientY;
+    startValue = knobData.value;
+    $svg.setPointerCapture(e.pointerId);
+  });
+
+  $svg.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const next = Math.round(startValue + (startY - e.clientY) * 0.5);
+    const clamped = Math.min(127, Math.max(0, next));
+    if (clamped === knobData.value) return;
+    knobData.value = clamped;
+    render();
+    midi.sendCC(knobData.cc, knobData.value);
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    $svg.releasePointerCapture(e.pointerId);
+    saveConfig(state);
+  }
+  $svg.addEventListener("pointerup", endDrag);
+  $svg.addEventListener("pointercancel", endDrag);
+
+  $svg.addEventListener("dblclick", () => {
+    knobData.value = 0;
+    render();
+    midi.sendCC(knobData.cc, 0);
+    saveConfig(state);
+  });
+
+  if ($scrollArea) {
+    $scrollArea.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const dir = e.deltaY < 0 ? 1 : -1;
+      const next = Math.min(127, Math.max(0, knobData.value + dir * WHEEL_STEP));
+      if (next === knobData.value) return;
+      knobData.value = next;
+      render();
+      midi.sendCC(knobData.cc, next);
+      saveConfig(state);
+    }, { passive: false });
+  }
+}
+
 function buildRack() {
   $rack.innerHTML = "";
   state.strips.forEach((strip, i) => {
     const el = document.createElement("div");
-    el.className = "strip";
+    el.className = "strip" + (strip.showKnobs ? "" : " knobs-hidden");
     el.innerHTML = `
+      <button class="toggle-knobs" title="Mostrar/Ocultar knobs laterais">${strip.showKnobs ? "−" : "+"}</button>
       <input class="lbl" type="text" value="${escapeAttr(strip.label)}" maxlength="14">
       <div class="cc-row">CC <input class="cc" type="number" min="0" max="127" value="${strip.cc}"></div>
-      <div class="fader-wrap">
-        <input class="fader" type="range" min="0" max="127" step="1" value="${strip.value}">
+      <div class="controls-row">
+        <div class="fader-col">
+          <div class="fader-wrap">
+            <input class="fader" type="range" min="0" max="127" step="1" value="${strip.value}">
+          </div>
+          <div class="value">${strip.value}</div>
+        </div>
+        <div class="side-knobs">
+          ${strip.knobs.map((knob, ki) => `
+            <div class="side-knob" data-ki="${ki}">
+              <div class="side-knob-header">
+                <input class="lbl" type="text" value="${escapeAttr(knob.label)}" maxlength="8">
+                <div class="cc-row">CC <input class="cc" type="number" min="0" max="127" value="${knob.cc}"></div>
+              </div>
+              <div class="side-knob-body">
+                <svg class="knob-svg" viewBox="0 0 64 64">
+                  <path class="knob-bg" d="${knobArcPath(32, 32, 24, 127)}"></path>
+                  <path class="knob-arc"></path>
+                  <circle class="knob-body" cx="32" cy="32" r="16"></circle>
+                  <g class="knob-ind">
+                    <line class="knob-line" x1="32" y1="14" x2="32" y2="22"></line>
+                  </g>
+                </svg>
+                <div class="value">${knob.value}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
       </div>
-      <div class="value">${strip.value}</div>
     `;
 
     const $lbl = el.querySelector(".lbl");
     const $cc = el.querySelector(".cc");
     const $fader = el.querySelector(".fader");
-    const $val = el.querySelector(".value");
+    const $val = el.querySelector(".fader-col .value");
+    const $toggle = el.querySelector(".toggle-knobs");
+    const $faderWrap = el.querySelector(".fader-wrap");
+
+    $toggle.addEventListener("click", () => {
+      strip.showKnobs = !strip.showKnobs;
+      el.classList.toggle("knobs-hidden", !strip.showKnobs);
+      $toggle.textContent = strip.showKnobs ? "−" : "+";
+      saveConfig(state);
+    });
 
     $lbl.addEventListener("change", () => {
       strip.label = $lbl.value.trim() || "Fader " + (i + 1);
@@ -121,124 +262,62 @@ function buildRack() {
       saveConfig(state);
     });
 
-    el.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      const dir = e.deltaY < 0 ? 1 : -1;
-      const next = Math.min(127, Math.max(0, strip.value + dir * WHEEL_STEP));
-      if (next === strip.value) return;
-      strip.value = next;
-      $fader.value = String(next);
-      $val.textContent = next;
-      midi.sendCC(strip.cc, next);
-      saveConfig(state);
-    }, { passive: false });
+    // Fader wheel (apply only on the fader area)
+    if ($faderWrap) {
+      $faderWrap.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        const dir = e.deltaY < 0 ? 1 : -1;
+        const next = Math.min(127, Math.max(0, strip.value + dir * WHEEL_STEP));
+        if (next === strip.value) return;
+        strip.value = next;
+        $fader.value = String(next);
+        $val.textContent = next;
+        midi.sendCC(strip.cc, next);
+        saveConfig(state);
+      }, { passive: false });
+    }
+
+    // Setup side knobs
+    el.querySelectorAll(".side-knob").forEach(($sk) => {
+      const ki = parseInt($sk.dataset.ki, 10);
+      setupKnob($sk, strip.knobs[ki], () => `K${ki + 1}`);
+    });
 
     $rack.appendChild(el);
   });
 }
 
-function buildKnobs() {
-  $knobRack.innerHTML = "";
-  state.knobs.forEach((knob, i) => {
-    const el = document.createElement("div");
-    el.className = "strip knob";
-    el.innerHTML = `
-      <input class="lbl" type="text" value="${escapeAttr(knob.label)}" maxlength="14">
-      <div class="cc-row">CC <input class="cc" type="number" min="0" max="127" value="${knob.cc}"></div>
-      <div class="knob-wrap">
-        <svg class="knob-svg" viewBox="0 0 64 64">
-          <path class="knob-bg" d="${knobArcPath(32, 32, 24, 127)}"></path>
-          <path class="knob-arc"></path>
-          <circle class="knob-body" cx="32" cy="32" r="16"></circle>
-          <g class="knob-ind">
-            <line class="knob-line" x1="32" y1="14" x2="32" y2="22"></line>
-          </g>
-        </svg>
-      </div>
-      <div class="value">${knob.value}</div>
-    `;
-
-    const $lbl = el.querySelector(".lbl");
-    const $cc = el.querySelector(".cc");
-    const $svg = el.querySelector(".knob-svg");
-    const $arc = el.querySelector(".knob-arc");
-    const $ind = el.querySelector(".knob-ind");
-    const $val = el.querySelector(".value");
-
-    function render() {
-      const angle = -135 + (knob.value / 127) * 270;
-      $ind.setAttribute("transform", `rotate(${angle} 32 32)`);
-      $arc.setAttribute("d", knobArcPath(32, 32, 24, knob.value));
-      $val.textContent = knob.value;
-    }
-    render();
-
-    $lbl.addEventListener("change", () => {
-      knob.label = $lbl.value.trim() || "Knob " + (i + 1);
-      $lbl.value = knob.label;
-      saveConfig(state);
-    });
-
-    $cc.addEventListener("change", () => {
-      knob.cc = clampCC($cc.value);
-      $cc.value = knob.cc;
-      saveConfig(state);
-    });
-
-    let dragging = false;
-    let startY = 0;
-    let startValue = 0;
-
-    $svg.addEventListener("pointerdown", (e) => {
-      dragging = true;
-      startY = e.clientY;
-      startValue = knob.value;
-      $svg.setPointerCapture(e.pointerId);
-    });
-
-    $svg.addEventListener("pointermove", (e) => {
-      if (!dragging) return;
-      const next = Math.round(startValue + (startY - e.clientY) * 0.5);
-      const clamped = Math.min(127, Math.max(0, next));
-      if (clamped === knob.value) return;
-      knob.value = clamped;
-      render();
-      midi.sendCC(knob.cc, knob.value);
-    });
-
-    function endDrag(e) {
-      if (!dragging) return;
-      dragging = false;
-      $svg.releasePointerCapture(e.pointerId);
-      saveConfig(state);
-    }
-    $svg.addEventListener("pointerup", endDrag);
-    $svg.addEventListener("pointercancel", endDrag);
-
-    $svg.addEventListener("dblclick", () => {
-      knob.value = 0;
-      render();
-      midi.sendCC(knob.cc, 0);
-      saveConfig(state);
-    });
-
-    el.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      const dir = e.deltaY < 0 ? 1 : -1;
-      const next = Math.min(127, Math.max(0, knob.value + dir * WHEEL_STEP));
-      if (next === knob.value) return;
-      knob.value = next;
-      render();
-      midi.sendCC(knob.cc, next);
-      saveConfig(state);
-    }, { passive: false });
-
-    $knobRack.appendChild(el);
-  });
-}
-
 $sendAll.addEventListener("click", () => midi.sendAll());
 $port.addEventListener("change", () => midi.selectPort($port.value));
+
+// Scroll horizontal com a roda do mouse nos racks (exceto sobre os controles de valor)
+[$rack, $knobRack].forEach(($container) => {
+  $container.addEventListener("wheel", (e) => {
+    // Verifica se o mouse está sobre um elemento que deve capturar o scroll vertical (Faders ou Knobs)
+    const isControlArea = e.target.closest(".fader-wrap") || 
+                         e.target.closest(".knob-wrap") || 
+                         e.target.closest(".side-knob-body");
+    
+    if (isControlArea) {
+      return; // Deixa o controle do valor agir
+    }
+
+    // Se o rack puder rolar horizontalmente, faz o scroll horizontal
+    // Caso contrário, deixa o evento subir para rolar a página verticalmente
+    const canScrollHorizontal = $container.scrollWidth > $container.clientWidth;
+    
+    if (canScrollHorizontal) {
+      // Verifica se ainda há espaço para rolar horizontalmente na direção desejada
+      const isScrollingLeft = e.deltaY < 0 && $container.scrollLeft > 0;
+      const isScrollingRight = e.deltaY > 0 && $container.scrollLeft < ($container.scrollWidth - $container.clientWidth);
+      
+      if (isScrollingLeft || isScrollingRight) {
+        e.preventDefault();
+        $container.scrollLeft += e.deltaY;
+      }
+    }
+  }, { passive: false });
+});
 
 buildChannelSelect();
 buildRack();
