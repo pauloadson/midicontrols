@@ -138,6 +138,7 @@ button:hover { border-color: var(--accent-dim); }
   align-items: flex-start;
   gap: 6px;
   width: 100%;
+  justify-content: center;
 }
 .fader-col {
   display: flex;
@@ -160,7 +161,7 @@ button:hover { border-color: var(--accent-dim); }
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 4px;
-  width: 58px;
+  width: 64px; /* Aumentado de 58px */
 }
 .side-knob-header {
   display: flex;
@@ -172,7 +173,7 @@ button:hover { border-color: var(--accent-dim); }
 }
 .side-knob .lbl {
   width: 100%;
-  font-size: 9px !important;
+  font-size: 10px !important; /* Ligeiramente maior para leitura */
   border-bottom: none !important;
   padding: 0 !important;
 }
@@ -180,7 +181,7 @@ button:hover { border-color: var(--accent-dim); }
   font-size: 8px !important;
 }
 .side-knob .cc {
-  width: 24px !important;
+  width: 28px !important; /* Aumentado de 24px */
   font-size: 8px !important;
   padding: 1px 0 !important;
 }
@@ -204,7 +205,7 @@ button:hover { border-color: var(--accent-dim); }
   font: inherit;
   font-size: 12px;
   text-align: center;
-  padding: 3px 0;
+  padding: 3px 2px; /* Adicionado um pouco de padding lateral */
 }
 .strip input.lbl:focus { outline: none; border-bottom-color: var(--accent); }
 .cc-row {
