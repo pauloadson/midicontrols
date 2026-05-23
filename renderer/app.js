@@ -290,36 +290,6 @@ function buildRack() {
 $sendAll.addEventListener("click", () => midi.sendAll());
 $port.addEventListener("change", () => midi.selectPort($port.value));
 
-// Scroll horizontal com a roda do mouse nos racks (exceto sobre os controles de valor)
-[$rack, $knobRack].forEach(($container) => {
-  $container.addEventListener("wheel", (e) => {
-    // Verifica se o mouse está sobre um elemento que deve capturar o scroll vertical (Faders ou Knobs)
-    const isControlArea = e.target.closest(".fader-wrap") || 
-                         e.target.closest(".knob-wrap") || 
-                         e.target.closest(".side-knob-body");
-    
-    if (isControlArea) {
-      return; // Deixa o controle do valor agir
-    }
-
-    // Se o rack puder rolar horizontalmente, faz o scroll horizontal
-    // Caso contrário, deixa o evento subir para rolar a página verticalmente
-    const canScrollHorizontal = $container.scrollWidth > $container.clientWidth;
-    
-    if (canScrollHorizontal) {
-      // Verifica se ainda há espaço para rolar horizontalmente na direção desejada
-      const isScrollingLeft = e.deltaY < 0 && $container.scrollLeft > 0;
-      const isScrollingRight = e.deltaY > 0 && $container.scrollLeft < ($container.scrollWidth - $container.clientWidth);
-      
-      if (isScrollingLeft || isScrollingRight) {
-        e.preventDefault();
-        $container.scrollLeft += e.deltaY;
-      }
-    }
-  }, { passive: false });
-});
-
-buildChannelSelect();
-buildRack();
+buildChannelSelect();buildRack();
 buildKnobs();
 midi.init();
