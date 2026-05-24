@@ -30,7 +30,7 @@ describe('State Logic', () => {
     expect(clampCC('abc')).toBe(0);
   });
 
-  test('loadState should migrate old config adding knobs and showKnobs to strips', () => {
+  test('loadState should migrate old config adding knobs, showKnobs, buttons and globalDelay to strips', () => {
     const oldConfig = {
       channel: 2,
       strips: Array.from({ length: 8 }, (_, i) => ({
@@ -44,10 +44,14 @@ describe('State Logic', () => {
 
     const state = loadState();
     expect(state.channel).toBe(2);
+    expect(state.globalDelay).toBeDefined();
+    expect(state.globalDelay.enabled).toBe(false);
     expect(state.strips[0].label).toBe("Old Fader 1");
     expect(state.strips[0].knobs).toBeDefined();
     expect(state.strips[0].knobs.length).toBe(3);
     expect(state.strips[0].showKnobs).toBe(true);
-    expect(state.strips[0].knobs[0].cc).toBe(36);
+    expect(state.strips[0].btnCc).toBe(60);
+    expect(state.strips[0].btnValue).toBe(0);
+    expect(state.knobs[0].btnCc).toBe(70);
   });
 });

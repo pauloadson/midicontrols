@@ -5,6 +5,7 @@ export class MidiManager {
     this.onPortSelected = onPortSelected;
     this.midiAccess = null;
     this.output = null;
+    this.pending = {}; // Registro de timeouts para o delay
   }
 
   async init() {
@@ -41,7 +42,25 @@ export class MidiManager {
   sendCC(cc, value) {
     if (!this.output) return;
     const status = 0xB0 | ((this.state.channel - 1) & 0x0F);
-    this.output.send([status, cc & 0x7F, value & 0x7F]);
+    
+    // Se o delay global estiver ativo, agenda o envio
+    if (this.state.globalDelay?.enabled) {
+      if (this.pending[cc]) {
+        clearTimeout(this.pending[cc]);
+      }
+      
+      this.onStatusChange("warn", `Aguardando ${this.state.globalDelay.seconds}s p/ enviar CC ${cc}...`);
+      
+      this.pending[cc] = setTimeout(() => {
+        if (this.output) {
+          this.output.send([status, cc & 0x7F, value & 0x7F]);
+          this.onStatusChange("ok", "conectado: " + this.output.name);
+        }
+        delete this.pending[cc];
+      }, (this.state.globalDelay.seconds || 3) * 1000);
+    } else {
+      this.output.send([status, cc & 0x7F, value & 0x7F]);
+    }
   }
 
   sendAll() {

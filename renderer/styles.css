@@ -36,7 +36,71 @@ header h1 {
   color: var(--muted);
   font-weight: 600;
 }
+.delay-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+.delay-btn {
+  font-weight: 600;
+  min-width: 100px;
+}
+.delay-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.delay-input {
+  width: 40px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  text-align: center;
+  padding: 4px 0;
+  font: inherit;
+}
 .field { display: flex; align-items: center; gap: 6px; }
+/* ... */
+.onoff-btn {
+  width: 24px; /* Reduzido de 28px */
+  height: 24px; /* Reduzido de 28px */
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 12px; /* Reduzido */
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.onoff-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.2);
+}
+.onoff-row {
+  display: flex;
+  align-items: center;
+  gap: 4px; /* Reduzido */
+  margin-top: 4px;
+}
+.onoff-row .cc-row {
+  margin: 0;
+  font-size: 9px; /* Menor */
+}
+.onoff-row .btn-cc { /* Corrigido seletor para btn-cc */
+  width: 30px !important;
+  font-size: 10px !important;
+  padding: 2px 0 !important;
+}
 .field label {
   font-size: 11px;
   text-transform: uppercase;

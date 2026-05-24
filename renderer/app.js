@@ -11,6 +11,34 @@ const $rack = document.getElementById("rack");
 const $knobRack = document.getElementById("knobRack");
 const $sendAll = document.getElementById("sendAll");
 
+// Injeta controles de delay no header
+const $header = document.querySelector("header");
+const $status = document.getElementById("status");
+const $delayGroup = document.createElement("div");
+$delayGroup.className = "delay-group";
+$delayGroup.innerHTML = `
+  <button id="delayBtn" class="delay-btn ${state.globalDelay.enabled ? 'active' : ''}" title="Ativa o atraso no envio para mapeamento MIDI">Delay Learn: ${state.globalDelay.enabled ? 'ON' : 'OFF'}</button>
+  <input id="delayInput" class="delay-input" type="number" min="1" max="10" value="${state.globalDelay.seconds}" title="Segundos de atraso">
+  <span style="font-size: 10px; color: var(--muted)">s</span>
+`;
+$header.insertBefore($delayGroup, $status);
+
+const $delayBtn = document.getElementById("delayBtn");
+const $delayInput = document.getElementById("delayInput");
+
+$delayBtn.addEventListener("click", () => {
+  state.globalDelay.enabled = !state.globalDelay.enabled;
+  $delayBtn.classList.toggle("active", state.globalDelay.enabled);
+  $delayBtn.textContent = `Delay Learn: ${state.globalDelay.enabled ? 'ON' : 'OFF'}`;
+  saveConfig(state);
+});
+
+$delayInput.addEventListener("change", () => {
+  state.globalDelay.seconds = Math.max(1, Math.min(10, parseInt($delayInput.value, 10) || 3));
+  $delayInput.value = state.globalDelay.seconds;
+  saveConfig(state);
+});
+
 function setStatus(kind, text) {
   $dot.className = kind;
   $statusText.textContent = text;
@@ -82,6 +110,10 @@ function buildKnobs() {
     el.innerHTML = `
       <input class="lbl" type="text" value="${escapeAttr(knob.label)}" maxlength="14">
       <div class="cc-row">CC <input class="cc" type="number" min="0" max="127" value="${knob.cc}"></div>
+      <div class="onoff-row">
+        <button class="onoff-btn ${knob.btnValue ? 'active' : ''}" title="Alternar On/Off (Mute)">⏻</button>
+        <div class="cc-row">CC <input class="btn-cc" type="number" min="0" max="127" value="${knob.btnCc}"></div>
+      </div>
       <div class="knob-wrap">
         <svg class="knob-svg" viewBox="0 0 64 64">
           <path class="knob-bg" d="${knobArcPath(32, 32, 24, 127)}"></path>
@@ -95,7 +127,26 @@ function buildKnobs() {
       <div class="value">${knob.value}</div>
     `;
     setupKnob(el, knob, () => "Knob " + (i + 1));
+    setupOnOff(el, knob);
     $knobRack.appendChild(el);
+  });
+}
+
+function setupOnOff(el, data) {
+  const $btn = el.querySelector(".onoff-btn");
+  const $btnCc = el.querySelector(".btn-cc");
+
+  $btn.addEventListener("click", () => {
+    data.btnValue = data.btnValue ? 0 : 127;
+    $btn.classList.toggle("active", !!data.btnValue);
+    midi.sendCC(data.btnCc, data.btnValue);
+    saveConfig(state);
+  });
+
+  $btnCc.addEventListener("change", () => {
+    data.btnCc = clampCC($btnCc.value);
+    $btnCc.value = data.btnCc;
+    saveConfig(state);
   });
 }
 
@@ -189,6 +240,10 @@ function buildRack() {
       <button class="toggle-knobs" title="Mostrar/Ocultar knobs laterais">${strip.showKnobs ? "−" : "+"}</button>
       <input class="lbl" type="text" value="${escapeAttr(strip.label)}" maxlength="14">
       <div class="cc-row">CC <input class="cc" type="number" min="0" max="127" value="${strip.cc}"></div>
+      <div class="onoff-row">
+        <button class="onoff-btn ${strip.btnValue ? 'active' : ''}" title="Alternar On/Off (Mute)">⏻</button>
+        <div class="cc-row">CC <input class="btn-cc" type="number" min="0" max="127" value="${strip.btnCc}"></div>
+      </div>
       <div class="controls-row">
         <div class="fader-col">
           <div class="fader-wrap">
@@ -233,6 +288,8 @@ function buildRack() {
       $toggle.textContent = strip.showKnobs ? "−" : "+";
       saveConfig(state);
     });
+
+    setupOnOff(el, strip);
 
     $lbl.addEventListener("change", () => {
       strip.label = $lbl.value.trim() || "Fader " + (i + 1);
