@@ -15,6 +15,9 @@ const $sendAll = document.getElementById("sendAll");
 const $header = document.querySelector("header");
 const $status = document.getElementById("status");
 
+// Aplica estado inicial do cabeçalho
+if (state.headerMinimized) $header.classList.add("minimized");
+
 const $delayGroup = document.createElement("div");
 $delayGroup.className = "delay-group";
 $delayGroup.innerHTML = `
@@ -23,6 +26,20 @@ $delayGroup.innerHTML = `
   <span style="font-size: 10px; color: var(--muted)">s</span>
 `;
 $header.insertBefore($delayGroup, $status);
+
+// Injeta botão de toggle do cabeçalho
+const $headerToggle = document.createElement("button");
+$headerToggle.id = "header-toggle";
+$headerToggle.innerHTML = state.headerMinimized ? '<span>Menu</span> ▼' : '<span>Recolher Menu</span> ▲';
+$headerToggle.title = "Minimizar/Expandir menu superior";
+$header.appendChild($headerToggle);
+
+$headerToggle.addEventListener("click", () => {
+  state.headerMinimized = !state.headerMinimized;
+  $header.classList.toggle("minimized", state.headerMinimized);
+  $headerToggle.innerHTML = state.headerMinimized ? '<span>Menu</span> ▼' : '<span>Recolher Menu</span> ▲';
+  saveConfig(state);
+});
 
 const $shortcutBtn = document.createElement("button");
 $shortcutBtn.id = "openShortcuts";

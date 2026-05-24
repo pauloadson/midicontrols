@@ -27,6 +27,34 @@ header {
   padding: 14px 18px;
   background: var(--panel);
   border-bottom: 1px solid var(--line);
+  transition: padding 0.2s, background 0.2s;
+  position: relative;
+}
+header.minimized {
+  padding: 2px 18px;
+  background: var(--bg);
+  min-height: 24px;
+}
+header.minimized > *:not(#header-toggle) {
+  display: none !important;
+}
+#header-toggle {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 8px;
+  margin-left: auto;
+  opacity: 0.5;
+  transition: opacity 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+#header-toggle:hover {
+  opacity: 1;
+  color: var(--accent);
 }
 header h1 {
   font-size: 13px;
@@ -155,7 +183,7 @@ button:hover { border-color: var(--accent-dim); }
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
-  padding: 12px 18px 22px;
+  padding: 12px 18px 12px;
   overflow-x: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--line) var(--bg);
@@ -342,7 +370,7 @@ input[type=range] {
 }
 .section-title {
   margin: 0;
-  padding: 22px 18px 4px;
+  padding: 12px 18px 2px;
   font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -353,7 +381,7 @@ input[type=range] {
   display: flex;
   flex-wrap: nowrap;
   gap: 12px;
-  padding: 4px 18px 22px;
+  padding: 2px 18px 12px;
   overflow-x: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--line) var(--bg);

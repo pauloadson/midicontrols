@@ -34,6 +34,7 @@ export function clampCC(n) {
 export function saveConfig(state) {
   const data = {
     globalDelay: state.globalDelay,
+    headerMinimized: state.headerMinimized,
     shortcuts: state.shortcuts,
     channel: state.channel,
     portId: state.portId,
@@ -46,6 +47,7 @@ export function saveConfig(state) {
 export function loadState() {
   const state = {
     globalDelay: { enabled: false, seconds: 3 },
+    headerMinimized: false,
     shortcuts: [],
     channel: 1,
     portId: null,
@@ -58,6 +60,7 @@ export function loadState() {
     if (raw) {
       const data = JSON.parse(raw);
       state.globalDelay = data.globalDelay || { enabled: false, seconds: 3 };
+      state.headerMinimized = !!data.headerMinimized;
       state.shortcuts = Array.isArray(data.shortcuts) ? data.shortcuts : [];
       state.channel = data.channel || 1;
       state.portId = data.portId || null;
