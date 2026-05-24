@@ -34,6 +34,7 @@ export function clampCC(n) {
 export function saveConfig(state) {
   const data = {
     globalDelay: state.globalDelay,
+    shortcuts: state.shortcuts,
     channel: state.channel,
     portId: state.portId,
     strips: state.strips,
@@ -45,6 +46,7 @@ export function saveConfig(state) {
 export function loadState() {
   const state = {
     globalDelay: { enabled: false, seconds: 3 },
+    shortcuts: [],
     channel: 1,
     portId: null,
     strips: structuredClone(defaultStrips),
@@ -56,6 +58,7 @@ export function loadState() {
     if (raw) {
       const data = JSON.parse(raw);
       state.globalDelay = data.globalDelay || { enabled: false, seconds: 3 };
+      state.shortcuts = Array.isArray(data.shortcuts) ? data.shortcuts : [];
       state.channel = data.channel || 1;
       state.portId = data.portId || null;
       if (Array.isArray(data.strips) && data.strips.length === NUM_STRIPS) {

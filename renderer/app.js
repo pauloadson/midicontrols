@@ -14,6 +14,7 @@ const $sendAll = document.getElementById("sendAll");
 // Injeta controles de delay no header
 const $header = document.querySelector("header");
 const $status = document.getElementById("status");
+
 const $delayGroup = document.createElement("div");
 $delayGroup.className = "delay-group";
 $delayGroup.innerHTML = `
@@ -22,6 +23,145 @@ $delayGroup.innerHTML = `
   <span style="font-size: 10px; color: var(--muted)">s</span>
 `;
 $header.insertBefore($delayGroup, $status);
+
+const $shortcutBtn = document.createElement("button");
+$shortcutBtn.id = "openShortcuts";
+$shortcutBtn.textContent = "Atalhos";
+$shortcutBtn.title = "Gerenciar atalhos de teclado globais";
+$header.insertBefore($shortcutBtn, $status);
+
+// Cria o Modal de Atalhos
+const $modal = document.createElement("div");
+$modal.id = "shortcutModal";
+$modal.className = "modal";
+$modal.innerHTML = `
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Atalhos Globais (Teclado -> MIDI CC)</h3>
+      <button class="close-modal">&times;</button>
+    </div>
+    <div id="shortcutsList"></div>
+    <button id="addShortcut">+ Adicionar Novo Atalho</button>
+    <p style="font-size: 10px; color: var(--muted); margin-top: 12px;">
+      Pressionar a tecla alterna o CC entre 0 e 127. Respeita o Delay Mode se ativo.
+    </p>
+  </div>
+`;
+document.body.appendChild($modal);
+
+const $shortcutsList = document.getElementById("shortcutsList");
+const $addShortcut = document.getElementById("addShortcut");
+
+function renderShortcuts() {
+  $shortcutsList.innerHTML = "";
+  state.shortcuts.forEach((s, i) => {
+    const row = document.createElement("div");
+    row.className = "shortcut-row";
+    row.innerHTML = `
+      <div class="field">
+        <label>Tecla</label>
+        <input type="text" class="s-key" value="${s.key}" maxlength="1">
+      </div>
+      <div class="field">
+        <label>MIDI CC</label>
+        <input type="number" class="s-cc" value="${s.cc}" min="0" max="127">
+      </div>
+      <button class="remove-shortcut" title="Remover">&times;</button>
+    `;
+
+    const $key = row.querySelector(".s-key");
+    const $cc = row.querySelector(".s-cc");
+    const $remove = row.querySelector(".remove-shortcut");
+
+    $key.addEventListener("change", () => {
+      s.key = $key.value.toUpperCase().trim();
+      $key.value = s.key;
+      saveConfig(state);
+    });
+
+    $cc.addEventListener("change", () => {
+      s.cc = clampCC($cc.value);
+      $cc.value = s.cc;
+      saveConfig(state);
+    });
+
+    $remove.addEventListener("click", () => {
+      state.shortcuts.splice(i, 1);
+      renderShortcuts();
+      saveConfig(state);
+    });
+
+    $shortcutsList.appendChild(row);
+  });
+}
+
+$shortcutBtn.addEventListener("click", () => {
+  renderShortcuts();
+  $modal.style.display = "flex";
+});
+
+$modal.querySelector(".close-modal").addEventListener("click", () => {
+  $modal.style.display = "none";
+});
+
+$addShortcut.addEventListener("click", () => {
+  state.shortcuts.push({ key: "", cc: 0, state: 0 });
+  renderShortcuts();
+  saveConfig(state);
+});
+
+// Listener Global de Teclado (Otimizado e Sincronizado)
+window.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  const key = e.key.toUpperCase();
+  const shortcut = state.shortcuts.find(s => s.key === key);
+  
+  if (shortcut) {
+    shortcut.state = shortcut.state ? 0 : 127;
+    
+    // 1. Dispara o MIDI (com ou sem delay)
+    midi.sendCC(shortcut.cc, shortcut.state);
+
+    // 2. Procura um controle visual na tela com o mesmo CC e atualiza ele
+    // Isso faz com que os botões On/Off e faders se movam quando o atalho é usado
+    updateUIForCC(shortcut.cc, shortcut.state);
+  }
+});
+
+// Função para sincronizar a interface quando um CC muda via atalho
+function updateUIForCC(cc, value) {
+  // Procura nos strips (Faders)
+  state.strips.forEach((strip, i) => {
+    if (strip.cc === cc) {
+      strip.value = value;
+      // Re-renderiza o rack para refletir a mudança
+      buildRack();
+    }
+    if (strip.btnCc === cc) {
+      strip.btnValue = value;
+      buildRack();
+    }
+    // Procura nos knobs laterais do strip
+    strip.knobs.forEach(knob => {
+      if (knob.cc === cc) {
+        knob.value = value;
+        buildRack();
+      }
+    });
+  });
+
+  // Procura nos knobs superiores
+  state.knobs.forEach((knob, i) => {
+    if (knob.cc === cc) {
+      knob.value = value;
+      buildKnobs();
+    }
+    if (knob.btnCc === cc) {
+      knob.btnValue = value;
+      buildKnobs();
+    }
+  });
+}
 
 const $delayBtn = document.getElementById("delayBtn");
 const $delayInput = document.getElementById("delayInput");
@@ -136,12 +276,14 @@ function setupOnOff(el, data) {
   const $btn = el.querySelector(".onoff-btn");
   const $btnCc = el.querySelector(".btn-cc");
 
-  $btn.addEventListener("click", () => {
+  function toggle() {
     data.btnValue = data.btnValue ? 0 : 127;
     $btn.classList.toggle("active", !!data.btnValue);
     midi.sendCC(data.btnCc, data.btnValue);
     saveConfig(state);
-  });
+  }
+
+  $btn.addEventListener("click", toggle);
 
   $btnCc.addEventListener("change", () => {
     data.btnCc = clampCC($btnCc.value);
@@ -157,7 +299,6 @@ function setupKnob(el, knobData, defaultLabelFn) {
   const $arc = el.querySelector(".knob-arc");
   const $ind = el.querySelector(".knob-ind");
   const $val = el.querySelector(".value");
-  // O wrap ou o corpo do knob onde o scroll deve agir
   const $scrollArea = el.querySelector(".knob-wrap") || el.querySelector(".side-knob-body");
 
   function render() {
@@ -319,7 +460,6 @@ function buildRack() {
       saveConfig(state);
     });
 
-    // Fader wheel (apply only on the fader area)
     if ($faderWrap) {
       $faderWrap.addEventListener("wheel", (e) => {
         e.preventDefault();
@@ -334,7 +474,6 @@ function buildRack() {
       }, { passive: false });
     }
 
-    // Setup side knobs
     el.querySelectorAll(".side-knob").forEach(($sk) => {
       const ki = parseInt($sk.dataset.ki, 10);
       setupKnob($sk, strip.knobs[ki], () => `K${ki + 1}`);
@@ -347,6 +486,7 @@ function buildRack() {
 $sendAll.addEventListener("click", () => midi.sendAll());
 $port.addEventListener("change", () => midi.selectPort($port.value));
 
-buildChannelSelect();buildRack();
+buildChannelSelect();
+buildRack();
 buildKnobs();
 midi.init();
